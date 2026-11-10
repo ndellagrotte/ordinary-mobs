@@ -12,6 +12,7 @@ import fathertoast.specialmobs.bestiary.Species;
 import fathertoast.specialmobs.config.BlockTarget;
 import fathertoast.specialmobs.config.Config;
 import fathertoast.specialmobs.dev.SelfTest;
+import fathertoast.specialmobs.entity.projectile.EntitySpecialFishHook;
 import fathertoast.specialmobs.loot.LootTableGenerator;
 import fathertoast.specialmobs.network.SpecialMobsNetwork;
 import fathertoast.specialmobs.spawn.SpecialMobReplacer;
@@ -95,6 +96,16 @@ public class SpecialMobsMod {
             }
         }
         log().info("Registered {} special variants!", variants);
+
+        event.getRegistry()
+            .register(EntityEntryBuilder.<EntitySpecialFishHook>create()
+                    .entity(EntitySpecialFishHook.class)
+                    .factory(EntitySpecialFishHook::new)
+                    .id(new ResourceLocation(MOD_ID, LegacyIds.FISH_HOOK_NAME), LegacyIds.FISH_HOOK_ID)
+                    .name(LegacyIds.FISH_HOOK_NAME)
+                    .tracker(64, 10, true)
+                    .build()
+            );
     }
 
     @Mod.EventHandler

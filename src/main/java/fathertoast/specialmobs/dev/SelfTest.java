@@ -7,12 +7,15 @@
 package fathertoast.specialmobs.dev;
 
 import fathertoast.specialmobs.SpecialMobsMod;
+import fathertoast.specialmobs.ai.IAngler;
+import fathertoast.specialmobs.bestiary.LegacyIds;
 import fathertoast.specialmobs.bestiary.MobFamily;
 import fathertoast.specialmobs.bestiary.Species;
 import fathertoast.specialmobs.config.Config;
 import fathertoast.specialmobs.entity.ISpecialMob;
 import fathertoast.specialmobs.entity.MobHelper;
 import fathertoast.specialmobs.entity.SpecialMobData;
+import fathertoast.specialmobs.entity.projectile.EntitySpecialFishHook;
 import fathertoast.specialmobs.spawn.SpawnInitInterceptor;
 import org.jspecify.annotations.Nullable;
 
@@ -47,6 +50,8 @@ import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
+import net.minecraftforge.fml.common.registry.EntityEntry;
+import net.minecraftforge.fml.common.registry.EntityRegistry;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -317,6 +322,41 @@ public final class SelfTest {
                 dyingPig.getLastDamageSource().getTrueSource() == attacker,
             "alive=" + dyingPig.isEntityAlive() + ", last damage " + dyingPig.getLastDamageSource()
         );
+
+        EntityEntry hook = EntityRegistry.getEntry(EntitySpecialFishHook.class);
+        EntityRegistry.EntityRegistration hookRegistration = EntityRegistry.instance()
+            .lookupModSpawn(EntitySpecialFishHook.class, false);
+        check("fish hook is registered under its original id",
+            hook != null &&
+                new ResourceLocation(SpecialMobsMod.MOD_ID, "smfishhook").equals(hook.getRegistryName()) &&
+                hookRegistration != null &&
+                hookRegistration.getModEntityId() == LegacyIds.FISH_HOOK_ID,
+            "entry " + (hook == null ? null : hook.getRegistryName()) + ", network id " +
+                (hookRegistration == null ? null : hookRegistration.getModEntityId())
+        );
+        int networkIdProblems = 0;
+        for (int i = 0; i < summoned.size(); i++) {
+            EntityRegistry.EntityRegistration registration = EntityRegistry.instance()
+                .lookupModSpawn(summoned.get(i).getClass(), false);
+            if (registration == null ||
+                registration.getModEntityId() != summonedSpecies.get(i).networkId() ||
+                !LegacyIds.allEntityNames()
+                    .get(registration.getModEntityId())
+                    .equals(summonedSpecies.get(i).entityName())) {
+                networkIdProblems++;
+            }
+        }
+        check("every species has its original network id", networkIdProblems == 0, networkIdProblems + " differ");
+
+        for (int i = 0; i < summoned.size(); i++) {
+            if (summoned.get(i) instanceof IAngler && summoned.get(i) instanceof EntityLiving angler) {
+                EntitySpecialFishHook cast = new EntitySpecialFishHook(world, angler, player);
+                check("fishing mob " + summonedSpecies.get(i).entityName() + " can cast its hook",
+                    world.spawnEntity(cast), "spawnEntity returned false"
+                );
+                cast.setDead();
+            }
+        }
 
         // Throws if the accessor mixin is not in effect
         MobHelper.resetFloatingCheck(player);

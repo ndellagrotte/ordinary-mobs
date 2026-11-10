@@ -23,6 +23,9 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.Explosion;
 import net.minecraft.world.World;
 
+import java.util.HashSet;
+import java.util.Set;
+
 public class EntityDarkCreeper extends Entity_SpecialCreeper {
 
     private static final ResourceLocation[] TEXTURES = {
@@ -68,25 +71,32 @@ public class EntityDarkCreeper extends Entity_SpecialCreeper {
         // Add unaffected light sources to the explosion's affected area
         final BlockPos center = new BlockPos(this);
         final int radius = explosionRadius * 4 * (powered ? 2 : 1);
-        BlockPos pos;
-        IBlockState block;
-        for (int y = -radius; y <= radius; y++) {
-            for (int x = -radius; x <= radius; x++) {
-                for (int z = -radius; z <= radius; z++) {
-                    if (x * x + y * y + z * z <= radius * radius) {
-                        pos = center.add(x, y, z);
-                        block = world.getBlockState(pos);
-                        // Ignore the block if it is not a light or is already exploded
-                        if (block.getLightValue(world, pos) > 1 &&
-                            !explosion.getAffectedBlockPositions().contains(pos)) {
-                            float blockDamage = (float) radius * (0.7F + rand.nextFloat() * 0.6F);
-                            if (block.getMaterial() != Material.AIR) {
-                                blockDamage -= (getExplosionResistance(explosion, world, pos, block) + 0.3F) * 0.3F;
-                            }
-                            if (blockDamage > 0.0F &&
-                                canExplosionDestroyBlock(explosion, world, pos, block, blockDamage)) {
-                                explosion.getAffectedBlockPositions().add(pos);
-                            }
+        final Set<BlockPos> alreadyAffected = new HashSet<>(explosion.getAffectedBlockPositions());
+        final BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
+        final int minY = Math.max(center.getY() - radius, 0);
+        final int maxY = Math.min(center.getY() + radius, world.getHeight() - 1);
+        for (int x = -radius; x <= radius; x++) {
+            for (int z = -radius; z <= radius; z++) {
+                // Reading a block in an unloaded chunk would load or even generate that chunk
+                if (x * x + z * z > radius * radius ||
+                    !world.isBlockLoaded(pos.setPos(center.getX() + x, center.getY(), center.getZ() + z))) {
+                    continue;
+                }
+                for (int blockY = minY; blockY <= maxY; blockY++) {
+                    int y = blockY - center.getY();
+                    if (x * x + y * y + z * z > radius * radius) {
+                        continue;
+                    }
+                    pos.setPos(center.getX() + x, blockY, center.getZ() + z);
+                    IBlockState block = world.getBlockState(pos);
+                    // Ignore the block if it is not a light or is already exploded
+                    if (block.getLightValue(world, pos) > 1 && !alreadyAffected.contains(pos)) {
+                        float blockDamage = (float) radius * (0.7F + rand.nextFloat() * 0.6F);
+                        if (block.getMaterial() != Material.AIR) {
+                            blockDamage -= (getExplosionResistance(explosion, world, pos, block) + 0.3F) * 0.3F;
+                        }
+                        if (blockDamage > 0.0F && canExplosionDestroyBlock(explosion, world, pos, block, blockDamage)) {
+                            explosion.getAffectedBlockPositions().add(pos.toImmutable());
                         }
                     }
                 }

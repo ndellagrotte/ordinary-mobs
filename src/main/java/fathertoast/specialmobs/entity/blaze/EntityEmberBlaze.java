@@ -6,6 +6,7 @@
 
 package fathertoast.specialmobs.entity.blaze;
 
+import fathertoast.specialmobs.entity.MobHelper;
 import fathertoast.specialmobs.loot.LootTableBuilder;
 
 import net.minecraft.entity.Entity;
@@ -52,7 +53,7 @@ public class EntityEmberBlaze extends Entity_SpecialBlaze {
     @Override
     protected void onTypeAttack(Entity target) {
         if (target instanceof EntityLivingBase) {
-            ((EntityLivingBase) target).setHealth(((EntityLivingBase) target).getHealth() - 2.0F);
+            MobHelper.dealDirectDamage(this, (EntityLivingBase) target, 2.0F);
         }
     }
 

@@ -7,6 +7,7 @@
 package fathertoast.specialmobs.entity;
 
 import fathertoast.specialmobs.config.Config;
+import fathertoast.specialmobs.mixin.NetHandlerPlayServerAccessor;
 
 import net.minecraft.enchantment.EnchantmentHelper;
 import net.minecraft.entity.Entity;
@@ -14,6 +15,7 @@ import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.EnumCreatureAttribute;
 import net.minecraft.entity.SharedMonsterAttributes;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.init.MobEffects;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemFood;
@@ -164,6 +166,47 @@ public class MobHelper {
         }
 
         return success;
+    }
+
+    /**
+     * Takes health straight from a target, ignoring its armor and anything else that would reduce damage.
+     * <p>
+     * If this would kill the target, the blow is dealt as real damage instead, so the death is handled like any
+     * other: the target drops its loot, the attacker gets the credit and a player sees the death screen.
+     *
+     * @param attacker The mob dealing the damage.
+     * @param target   The entity losing health.
+     * @param amount   The health to take.
+     */
+    public static void dealDirectDamage(EntityLivingBase attacker, EntityLivingBase target, float amount) {
+        float health = target.getHealth();
+        if (target.isDead || health <= 0.0F) {
+            return;
+        }
+        if (health > amount) {
+            target.setHealth(health - amount);
+            return;
+        }
+        target.hurtResistantTime = 0;
+        target.attackEntityFrom(DamageSource.causeMobDamage(attacker).setDamageBypassesArmor().setDamageIsAbsolute(),
+            health + target.getAbsorptionAmount()
+        );
+    }
+
+    /**
+     * Stops the server from kicking a player for flying after a mob has picked them up.
+     * <p>
+     * The server only updates whether a player is floating while they move on their own. A player grabbed in
+     * mid-air would stay marked as floating for the whole ride, and be kicked once that lasts long enough.
+     *
+     * @param rider The entity that has just started riding a mob.
+     */
+    public static void resetFloatingCheck(Entity rider) {
+        if (rider instanceof EntityPlayerMP player && player.connection != null) {
+            NetHandlerPlayServerAccessor connection = (NetHandlerPlayServerAccessor) player.connection;
+            connection.specialmobs$setFloating(false);
+            connection.specialmobs$setFloatingTickCount(0);
+        }
     }
 
     /**

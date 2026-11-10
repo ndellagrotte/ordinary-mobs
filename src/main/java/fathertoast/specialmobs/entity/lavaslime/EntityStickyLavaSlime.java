@@ -6,6 +6,7 @@
 
 package fathertoast.specialmobs.entity.lavaslime;
 
+import fathertoast.specialmobs.entity.MobHelper;
 import fathertoast.specialmobs.loot.LootTableBuilder;
 
 import net.minecraft.entity.Entity;
@@ -79,6 +80,7 @@ public class EntityStickyLavaSlime extends Entity_SpecialLavaSlime {
     protected void onTypeAttack(Entity target) {
         if (grabTime <= -20 && getPassengers().isEmpty()) {
             if (target.startRiding(this, true)) {
+                MobHelper.resetFloatingCheck(target);
                 grabTime = 20;
             }
         }

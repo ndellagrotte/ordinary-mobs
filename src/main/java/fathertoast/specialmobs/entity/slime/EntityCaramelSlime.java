@@ -6,6 +6,7 @@
 
 package fathertoast.specialmobs.entity.slime;
 
+import fathertoast.specialmobs.entity.MobHelper;
 import fathertoast.specialmobs.loot.LootTableBuilder;
 
 import net.minecraft.entity.Entity;
@@ -84,6 +85,7 @@ public class EntityCaramelSlime extends Entity_SpecialSlime {
     protected void onTypeAttack(Entity target) {
         if (grabTime <= -20 && getPassengers().isEmpty()) {
             if (target.startRiding(this, true)) {
+                MobHelper.resetFloatingCheck(target);
                 grabTime = 20;
             }
         }

@@ -22,6 +22,9 @@ import net.minecraft.util.math.MathHelper;
 
 public class EntityAINinja<T extends EntityLiving & INinja> extends EntityAIBase {
 
+    /** Players further away than this, squared, can not keep a ninja in hiding by looking its way. */
+    private static final double WATCH_RANGE_SQ = 64.0 * 64.0;
+
     // The owner of this ai.
     private final T theEntity;
 
@@ -221,22 +224,17 @@ public class EntityAINinja<T extends EntityLiving & INinja> extends EntityAIBase
             return false;
         }
 
-        int length = theEntity.world.playerEntities.size();
-        try {
-            EntityPlayer player;
-            float dX, dZ;
-            float angleFromPlayer;
-            for (int i = 0; i < length; i++) {
-                player = theEntity.world.playerEntities.get(i);
-                dX = (float) (theEntity.posX - player.posX);
-                dZ = (float) (theEntity.posZ - player.posZ);
-                angleFromPlayer = (float) Math.atan2(dX, -dZ) * 180.0F / (float) Math.PI;
-                if (Math.abs(angleFromPlayer - MathHelper.wrapDegrees(player.rotationYawHead)) > 90.0F) {
-                    return true;
-                }
+        // Stay hidden for as long as any nearby player is facing this way
+        for (EntityPlayer player : theEntity.world.playerEntities) {
+            if (player.isSpectator() || theEntity.getDistanceSq(player) > WATCH_RANGE_SQ) {
+                continue;
             }
-        } catch (Exception ex) {
-            // Do nothing
+            float dX = (float) (theEntity.posX - player.posX);
+            float dZ = (float) (theEntity.posZ - player.posZ);
+            float angleFromPlayer = (float) Math.atan2(dX, -dZ) * 180.0F / (float) Math.PI;
+            if (Math.abs(angleFromPlayer - MathHelper.wrapDegrees(player.rotationYawHead)) > 90.0F) {
+                return true;
+            }
         }
         return false;
     }

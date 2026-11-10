@@ -10,6 +10,7 @@ import fathertoast.specialmobs.SpecialMobsMod;
 import fathertoast.specialmobs.bestiary.MobFamily;
 import fathertoast.specialmobs.bestiary.Species;
 import fathertoast.specialmobs.entity.ISpecialMob;
+import fathertoast.specialmobs.entity.MobHelper;
 import fathertoast.specialmobs.entity.SpecialMobData;
 import fathertoast.specialmobs.spawn.SpawnInitInterceptor;
 import org.jspecify.annotations.Nullable;
@@ -23,6 +24,7 @@ import net.minecraft.entity.monster.EntitySlime;
 import net.minecraft.entity.monster.EntitySpider;
 import net.minecraft.entity.monster.EntityZombie;
 import net.minecraft.entity.passive.EntityChicken;
+import net.minecraft.entity.passive.EntityPig;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.init.Blocks;
 import net.minecraft.init.Items;
@@ -160,6 +162,7 @@ public final class SelfTest {
         } else if (afterNatural == 80) {
             checkSummoned(world);
             giveCustomTexture();
+            checkHelpers(world, player);
         } else if (afterNatural == 100) {
             spawnVanillaMobs(world);
         } else if (afterNatural == 103) {
@@ -274,6 +277,35 @@ public final class SelfTest {
                 );
             }
         }
+    }
+
+    private void checkHelpers(WorldServer world, EntityPlayerMP player) {
+        EntityLiving attacker = (EntityLiving) summoned.get(0);
+
+        EntityPig hurtPig = new EntityPig(world);
+        hurtPig.setLocationAndAngles(origin.getX() - 20.5, origin.getY(), origin.getZ() + 0.5, 0.0F, 0.0F);
+        world.spawnEntity(hurtPig);
+        MobHelper.dealDirectDamage(attacker, hurtPig, 2.0F);
+        check("direct damage takes health",
+            hurtPig.isEntityAlive() && hurtPig.getHealth() == hurtPig.getMaxHealth() - 2.0F,
+            "health is " + hurtPig.getHealth()
+        );
+
+        EntityPig dyingPig = new EntityPig(world);
+        dyingPig.setLocationAndAngles(origin.getX() - 22.5, origin.getY(), origin.getZ() + 0.5, 0.0F, 0.0F);
+        world.spawnEntity(dyingPig);
+        dyingPig.setHealth(1.0F);
+        MobHelper.dealDirectDamage(attacker, dyingPig, 2.0F);
+        check("lethal direct damage is a proper kill",
+            !dyingPig.isEntityAlive() &&
+                dyingPig.getLastDamageSource() != null &&
+                dyingPig.getLastDamageSource().getTrueSource() == attacker,
+            "alive=" + dyingPig.isEntityAlive() + ", last damage " + dyingPig.getLastDamageSource()
+        );
+
+        // Throws if the accessor mixin is not in effect
+        MobHelper.resetFloatingCheck(player);
+        check("flying check can be reset", true, "");
     }
 
     private void giveCustomTexture() {

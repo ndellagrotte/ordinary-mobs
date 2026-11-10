@@ -16,6 +16,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.potion.PotionEffect;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.World;
+import net.minecraftforge.common.util.FakePlayer;
 
 public class EntityBlindingEnderman extends Entity_SpecialEnderman {
 
@@ -50,7 +51,8 @@ public class EntityBlindingEnderman extends Entity_SpecialEnderman {
     @Override
     public void onLivingUpdate() {
         EntityLivingBase target = getAttackTarget();
-        if (target != null && getDistanceSq(target) < 144.0) {
+        // Fake players stand in for machines and have no connection to send potion effects to
+        if (!world.isRemote && target != null && !(target instanceof FakePlayer) && getDistanceSq(target) < 144.0) {
             target.addPotionEffect(new PotionEffect(MobEffects.BLINDNESS, 50, 0));
             target.removePotionEffect(MobEffects.NIGHT_VISION);
         }

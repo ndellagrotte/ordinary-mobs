@@ -156,7 +156,7 @@ public class Entity_SpecialSilverfish extends EntitySilverfish implements ISpeci
             // Immediately start calling for reinforcements if it can find a player
             if (getAttackTarget() == null) {
                 List<EntityPlayer> nearbyPlayers = world.getEntitiesWithinAABB(EntityPlayer.class,
-                    getEntityBoundingBox().expand(16.0, 8.0, 16.0)
+                    getEntityBoundingBox().grow(16.0, 8.0, 16.0)
                 );
                 for (EntityPlayer player : nearbyPlayers) {
                     if (player != null && canEntityBeSeen(player)) {

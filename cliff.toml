@@ -185,6 +185,6 @@ commit_parsers = [
     { message = "^Merge", skip = true },
     { message = "^revert", skip = true },
     { message = "^Signed-off-by", skip = true },
-    { message = "^Co-authored-by", group = "<!-- 10 -->Co-authors" },
+    { message = "(?i)^Co-authored-by", skip = true },
     { message = ".*", group = "<!-- 9 -->Other" }
 ]

@@ -11,6 +11,7 @@ base {
 }
 
 def accessTransformerNames = access_transformers.tokenize()
+def mixinConfigs = mixin_configs.tokenize(',')*.trim().findAll { !it.isEmpty() }.join(',')
 def dependOnHei = depend_on_hei.toBoolean()
 def heiDependency = { dependOnHei ? it.requires('had-enough-items') : it.optional('had-enough-items') }
 
@@ -76,11 +77,18 @@ cleanroom {
             configure {
                 username = minecraft_username
                 jvmArgs extra_jvm_args.tokenize()
+                if (mixinConfigs) {
+                    // Cleanroom reads this in dev to register mixin configs that would otherwise come from the jar manifest
+                    jvmArgs "-Dcrl.dev.mixin=${mixinConfigs}"
+                }
             }
         }
         server {
             configure {
                 jvmArgs extra_jvm_args.tokenize()
+                if (mixinConfigs) {
+                    jvmArgs "-Dcrl.dev.mixin=${mixinConfigs}"
+                }
             }
         }
     }
@@ -94,6 +102,12 @@ tokenEnvoy {
 
 jar {
     manifest {
+        // Marks the jar as Cleanroom-only so legacy Forge skips it instead of failing on Java 25 classes
+        attributes 'Implementation-Vendor': mod_authors, 'Specification-Vendor': mod_authors
+        attributes 'ModType': 'CRL'
+        if (mixinConfigs) {
+            attributes 'MixinConfigs': mixinConfigs
+        }
         if (accessTransformerNames) {
             attributes 'FMLAT': accessTransformerNames.join(' ')
         }

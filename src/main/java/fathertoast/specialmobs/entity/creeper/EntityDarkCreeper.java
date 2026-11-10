@@ -1,0 +1,137 @@
+/*
+ * Copyright (C) 2019 FatherToast (original author)
+ * Copyright (C) 2026 Nicholas DellaGrotte
+ * SPDX-License-Identifier: GPL-3.0-only
+ */
+
+package fathertoast.specialmobs.entity.creeper;
+
+import fathertoast.specialmobs.loot.LootTableBuilder;
+
+import net.minecraft.block.material.Material;
+import net.minecraft.block.state.IBlockState;
+import net.minecraft.entity.EntityAreaEffectCloud;
+import net.minecraft.init.Blocks;
+import net.minecraft.init.Items;
+import net.minecraft.init.MobEffects;
+import net.minecraft.init.PotionTypes;
+import net.minecraft.item.ItemStack;
+import net.minecraft.potion.PotionEffect;
+import net.minecraft.potion.PotionUtils;
+import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.Explosion;
+import net.minecraft.world.World;
+
+import java.util.HashSet;
+import java.util.Set;
+
+public class EntityDarkCreeper extends Entity_SpecialCreeper {
+
+    private static final ResourceLocation[] TEXTURES = {
+        new ResourceLocation(getTexturePath("dark")),
+        new ResourceLocation(getTexturePath("dark_eyes"))
+    };
+
+    public EntityDarkCreeper(World world) {
+        super(world);
+    }
+
+    public static void buildLootTable(LootTableBuilder loot) {
+        addBaseLoot(loot);
+        loot.addClusterDrop("common", "Torches", Blocks.TORCH);
+
+        loot.addRareDrop("rare", "Night vision potion",
+            PotionUtils.addPotionToItemStack(new ItemStack(Items.POTIONITEM), PotionTypes.NIGHT_VISION)
+        );
+    }
+
+    @Override
+    public ResourceLocation[] getDefaultTextures() {
+        return TEXTURES;
+    }
+
+    /** Called to modify the mob's attributes based on the variant. */
+    @Override
+    protected void applyTypeAttributes() {
+        experienceValue += 1;
+    }
+
+    // The explosion caused by this creeper.
+    @Override
+    public void explodeByType(boolean powered, boolean griefing) {
+        float power = (float) explosionRadius / 2.0F * (powered ? 2.0F : 1.0F);
+        Explosion explosion = new Explosion(world, this, posX, posY, posZ, power, false, griefing);
+        if (net.minecraftforge.event.ForgeEventFactory.onExplosionStart(world, explosion)) {
+            return;
+        }
+
+        explosion.doExplosionA();
+
+        // Add unaffected light sources to the explosion's affected area
+        final BlockPos center = new BlockPos(this);
+        final int radius = explosionRadius * 4 * (powered ? 2 : 1);
+        final Set<BlockPos> alreadyAffected = new HashSet<>(explosion.getAffectedBlockPositions());
+        final BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
+        final int minY = Math.max(center.getY() - radius, 0);
+        final int maxY = Math.min(center.getY() + radius, world.getHeight() - 1);
+        for (int x = -radius; x <= radius; x++) {
+            for (int z = -radius; z <= radius; z++) {
+                // Reading a block in an unloaded chunk would load or even generate that chunk
+                if (x * x + z * z > radius * radius ||
+                    !world.isBlockLoaded(pos.setPos(center.getX() + x, center.getY(), center.getZ() + z))) {
+                    continue;
+                }
+                for (int blockY = minY; blockY <= maxY; blockY++) {
+                    int y = blockY - center.getY();
+                    if (x * x + y * y + z * z > radius * radius) {
+                        continue;
+                    }
+                    pos.setPos(center.getX() + x, blockY, center.getZ() + z);
+                    IBlockState block = world.getBlockState(pos);
+                    // Ignore the block if it is not a light or is already exploded
+                    if (block.getLightValue(world, pos) > 1 && !alreadyAffected.contains(pos)) {
+                        float blockDamage = (float) radius * (0.7F + rand.nextFloat() * 0.6F);
+                        if (block.getMaterial() != Material.AIR) {
+                            blockDamage -= (getExplosionResistance(explosion, world, pos, block) + 0.3F) * 0.3F;
+                        }
+                        if (blockDamage > 0.0F && canExplosionDestroyBlock(explosion, world, pos, block, blockDamage)) {
+                            explosion.getAffectedBlockPositions().add(pos.toImmutable());
+                        }
+                    }
+                }
+            }
+        }
+
+        explosion.doExplosionB(true);
+
+        // Move the time forawrd to next night
+        if (powered) {
+            long time = world.getWorldTime();
+            final int dayTime = (int) (time % 24000L);
+
+            time -= dayTime;
+            if (dayTime <= 13000) {
+                time += 13000L;
+            } else {
+                time += 37000L;
+            }
+            world.setWorldTime(time);
+        }
+    }
+
+    // Return true here only if you are adding extra potion effects to potionCloudByType().
+    @Override
+    public boolean alwaysMakePotionCloud() {
+        return true;
+    }
+
+    // The explosion caused by this creeper.
+    @Override
+    public void potionCloudByType(EntityAreaEffectCloud potionCloud, boolean powered) {
+        super.potionCloudByType(potionCloud, powered);
+
+        potionCloud.addEffect(new PotionEffect(MobEffects.BLINDNESS, 100));
+    }
+
+}

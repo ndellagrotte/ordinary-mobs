@@ -1,0 +1,60 @@
+/*
+ * Copyright (C) 2019 FatherToast (original author)
+ * Copyright (C) 2026 Nicholas DellaGrotte
+ * SPDX-License-Identifier: GPL-3.0-only
+ */
+
+package fathertoast.specialmobs.entity.blaze;
+
+import fathertoast.specialmobs.entity.MobHelper;
+import fathertoast.specialmobs.loot.LootTableBuilder;
+
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.EntityLivingBase;
+import net.minecraft.entity.SharedMonsterAttributes;
+import net.minecraft.init.Items;
+import net.minecraft.util.ResourceLocation;
+import net.minecraft.world.World;
+
+public class EntityEmberBlaze extends Entity_SpecialBlaze {
+
+    private static final ResourceLocation[] TEXTURES = { new ResourceLocation(getTexturePath("ember")) };
+
+    public EntityEmberBlaze(World world) {
+        super(world);
+    }
+
+    public static void buildLootTable(LootTableBuilder loot) {
+        addBaseLoot(loot);
+        loot.addCommonDrop("common", "Coal", Items.COAL, 1);
+    }
+
+    @Override
+    public ResourceLocation[] getDefaultTextures() {
+        return TEXTURES;
+    }
+
+    /** Called to modify the mob's attributes based on the variant. */
+    @Override
+    protected void applyTypeAttributes() {
+        experienceValue += 2;
+
+        getSpecialData().addAttribute(SharedMonsterAttributes.MAX_HEALTH, 10.0);
+        getSpecialData().addAttribute(SharedMonsterAttributes.ARMOR, 10.0);
+        getSpecialData().multAttribute(SharedMonsterAttributes.MOVEMENT_SPEED, 1.3);
+    }
+
+    @Override
+    protected void initTypeAI() {
+        disableRangedAI();
+    }
+
+    // Overridden to modify attack effects.
+    @Override
+    protected void onTypeAttack(Entity target) {
+        if (target instanceof EntityLivingBase) {
+            MobHelper.dealDirectDamage(this, (EntityLivingBase) target, 2.0F);
+        }
+    }
+
+}

@@ -1,0 +1,20 @@
+{
+  "required": true,
+  "package": "fathertoast.specialmobs.mixin",
+  "compatibilityLevel": "JAVA_25",
+  "target": "@env(DEFAULT)",
+  "mixins": [
+    "EntityCreeperAccessor",
+    "EntityWitchAccessor",
+    "MobSpawnerBaseLogicMixin",
+    "NetHandlerPlayServerAccessor",
+    "WorldEntitySpawnerMixin"
+  ],
+  "client": [],
+  "server": [],
+  "minVersion": "0.8.7",
+  "refmap": "mixins.specialmobs.refmap.json",
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

@@ -37,7 +37,7 @@ import net.minecraftforge.fml.common.registry.ForgeRegistries;
 import java.io.File;
 
 @Mod(modid = SpecialMobsMod.MOD_ID, name = SpecialMobsMod.NAME, version = SpecialMobsMod.VERSION,
-    acceptedMinecraftVersions = "[1.12.2]"
+    acceptedMinecraftVersions = "[1.12.2]", guiFactory = "fathertoast.specialmobs.client.SpecialMobsGuiFactory"
 )
 @Mod.EventBusSubscriber(modid = SpecialMobsMod.MOD_ID)
 public class SpecialMobsMod {

@@ -7,6 +7,7 @@
 package fathertoast.specialmobs.client;
 
 import fathertoast.specialmobs.CommonProxy;
+import fathertoast.specialmobs.SpecialMobsMod;
 import fathertoast.specialmobs.ai.IAngler;
 import fathertoast.specialmobs.bestiary.MobFamily;
 import fathertoast.specialmobs.config.Config;
@@ -18,8 +19,11 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.entity.Entity;
 import net.minecraft.init.Items;
 import net.minecraft.util.ResourceLocation;
+import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.fml.client.event.ConfigChangedEvent;
 import net.minecraftforge.fml.client.registry.IRenderFactory;
 import net.minecraftforge.fml.client.registry.RenderingRegistry;
+import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
 public class ClientProxy extends CommonProxy {
 
@@ -29,8 +33,17 @@ public class ClientProxy extends CommonProxy {
         RenderingRegistry.registerEntityRenderingHandler((Class<T>) family.base().entityClass(), renderFactory);
     }
 
+    /** Applies the options after they were changed on the in-game config screen. */
+    @SubscribeEvent
+    public void onConfigChanged(ConfigChangedEvent.OnConfigChangedEvent event) {
+        if (SpecialMobsMod.MOD_ID.equals(event.getModID())) {
+            Config.reload();
+        }
+    }
+
     @Override
     public void init() {
+        MinecraftForge.EVENT_BUS.register(this);
         if (SelfTest.isRequested()) {
             SelfTestClient.register();
         }

@@ -9,6 +9,7 @@ package fathertoast.specialmobs.dev;
 import fathertoast.specialmobs.SpecialMobsMod;
 import fathertoast.specialmobs.bestiary.MobFamily;
 import fathertoast.specialmobs.bestiary.Species;
+import fathertoast.specialmobs.config.Config;
 import fathertoast.specialmobs.entity.ISpecialMob;
 import fathertoast.specialmobs.entity.MobHelper;
 import fathertoast.specialmobs.entity.SpecialMobData;
@@ -40,13 +41,17 @@ import net.minecraft.world.WorldServer;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.storage.loot.LootTable;
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.common.config.ConfigCategory;
+import net.minecraftforge.common.config.Property;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * An in-game check of the things that can only be seen with a world running: that every species can be spawned,
@@ -171,6 +176,16 @@ public final class SelfTest {
             for (Entity entity : summoned) {
                 ((EntityLiving) entity).setNoAI(false);
             }
+        } else if (afterNatural == 105) {
+            changeZombieOptions();
+        } else if (afterNatural == 106) {
+            for (int i = 0; i < 12; i++) {
+                EntityLiving mob = newVanillaMob(world, EntityZombie.class, -48, i * 3);
+                afterReload.add(mob);
+                world.spawnEntity(mob);
+            }
+        } else if (afterNatural == 109) {
+            checkZombieOptionsApplied(world);
         } else if (afterNatural == 220) {
             // The mobs have had a while to run their AI. Anything that throws there crashes the game instead.
             check("mobs ran their AI without crashing", true, "");
@@ -363,6 +378,51 @@ public final class SelfTest {
             chunkLoaded.add(mob);
         }
         world.loadEntities(new ArrayList<>(chunkLoaded));
+    }
+
+    private final List<EntityLiving> afterReload = new ArrayList<>();
+    private final Map<Property, String[]> changedOptions = new LinkedHashMap<>();
+
+    /** Makes every zombie special and the husk the only variant with any weight. */
+    private void changeZombieOptions() {
+        ConfigCategory zombies = Config.file().getCategory("zombies");
+        setOption(zombies.get("_special_chance"), "1.0");
+        setOption(zombies.get("_special_chance_exceptions"));
+        for (Species variant : MobFamily.ZOMBIE.variants()) {
+            setOption(zombies.get(variant.key() + "_weight"), variant.name().equals("Husk") ? "100" : "0");
+            setOption(zombies.get(variant.key() + "_weight_exceptions"));
+        }
+        Config.reload();
+    }
+
+    private void setOption(Property option, String... values) {
+        changedOptions.put(option, option.isList() ? option.getStringList() : new String[] { option.getString() });
+        if (option.isList()) {
+            option.set(values);
+        } else {
+            option.set(values[0]);
+        }
+    }
+
+    private void checkZombieOptionsApplied(WorldServer world) {
+        List<String> wrong = new ArrayList<>();
+        for (EntityLiving original : afterReload) {
+            Entity replacement = world.getEntityFromUuid(original.getUniqueID());
+            if (!(replacement instanceof ISpecialMob mob) || !mob.getSpecies().entityName().equals("HuskZombie")) {
+                wrong.add(String.valueOf(replacement));
+            }
+        }
+        check("changed options apply to the next spawns without a restart", wrong.isEmpty(), wrong.toString());
+
+        // Put the options back, so the test leaves the config file as it found it
+        for (Map.Entry<Property, String[]> changed : changedOptions.entrySet()) {
+            if (changed.getKey().isList()) {
+                changed.getKey().set(changed.getValue());
+            } else {
+                changed.getKey().set(changed.getValue()[0]);
+            }
+        }
+        Config.reload();
     }
 
     private EntityLiving newVanillaMob(WorldServer world, Class<?> vanillaClass, int dx, int dz) {

@@ -13,11 +13,13 @@ import org.apache.commons.io.FileUtils;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiMainMenu;
+import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.entity.Entity;
 import net.minecraft.world.GameType;
 import net.minecraft.world.WorldSettings;
 import net.minecraft.world.WorldType;
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.fml.client.config.GuiConfig;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 
@@ -36,6 +38,12 @@ final class SelfTestClient {
 
     static void register() {
         MinecraftForge.EVENT_BUS.register(new SelfTestClient());
+    }
+
+    private static void checkConfigScreen(Minecraft minecraft) {
+        GuiScreen screen = new SpecialMobsGuiFactory().createConfigGui(minecraft.currentScreen);
+        int categories = screen instanceof GuiConfig config ? config.configElements.size() : -1;
+        SelfTest.check("config screen lists every category", categories == 15, "it has " + categories + " entries");
     }
 
     private static void openTestWorld(Minecraft minecraft) {
@@ -64,6 +72,7 @@ final class SelfTestClient {
         if (!worldOpened) {
             if (minecraft.currentScreen instanceof GuiMainMenu && ++ticksOnMainMenu > 20) {
                 worldOpened = true;
+                checkConfigScreen(minecraft);
                 openTestWorld(minecraft);
             }
         } else if (SelfTest.serverFinished && ++ticksAfterServerFinished == 20) {

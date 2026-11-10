@@ -104,7 +104,7 @@ public enum MobFamily {
 
     private final Class<?>[] replaceableClasses;
 
-    private final @Nullable Species base;
+    private final Species base;
     private final Species[] variants;
 
     MobFamily(String name, String key, int eggBaseColor, Consumer<SpeciesList> declaration,
@@ -120,8 +120,7 @@ public enum MobFamily {
         SpeciesList declared = new SpeciesList(this, variantNames);
         declaration.accept(declared);
         base = declared.base();
-        Species[] declaredVariants = declared.variants();
-        variants = declaredVariants == null ? new Species[0] : declaredVariants;
+        variants = declared.variants();
     }
 
     /**
@@ -151,15 +150,12 @@ public enum MobFamily {
 
     /** @return The species that stands in for the vanilla mob. */
     public Species base() {
-        if (base == null) {
-            throw new IllegalStateException("Mob family '" + name + "' has no species yet");
-        }
         return base;
     }
 
-    /** @return True once this family's species are declared. Only false while a family is not implemented yet. */
-    public boolean isAvailable() {
-        return base != null;
+    /** @return The vanilla mob classes this family replaces. */
+    public List<Class<?>> replaceableClasses() {
+        return List.of(replaceableClasses);
     }
 
     /** @return The special variants, in network id order. */
@@ -179,9 +175,6 @@ public enum MobFamily {
 
     /** @return The vanilla replacement followed by the special variants, in network id order. */
     public List<Species> allSpecies() {
-        if (base == null) {
-            return List.of();
-        }
         Species[] all = new Species[variants.length + 1];
         all[0] = base;
         System.arraycopy(variants, 0, all, 1, variants.length);

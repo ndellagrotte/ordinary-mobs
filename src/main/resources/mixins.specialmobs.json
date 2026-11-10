@@ -5,7 +5,9 @@
   "target": "@env(DEFAULT)",
   "mixins": [
     "EntityCreeperAccessor",
-    "EntityWitchAccessor"
+    "EntityWitchAccessor",
+    "MobSpawnerBaseLogicMixin",
+    "WorldEntitySpawnerMixin"
   ],
   "client": [],
   "server": [],

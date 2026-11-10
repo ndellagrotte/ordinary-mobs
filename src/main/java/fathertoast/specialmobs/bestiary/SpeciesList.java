@@ -70,16 +70,17 @@ public final class SpeciesList {
         );
     }
 
-    @Nullable
+    /** @return The declared vanilla replacement. */
     Species base() {
+        if (base == null) {
+            throw new IllegalStateException("Mob family '" + family.name + "' does not declare its vanilla replacement"
+            );
+        }
         return base;
     }
 
-    /** @return The declared variants in network id order, or null if the family is not completely declared. */
-    Species @Nullable [] variants() {
-        if (base == null) {
-            return null;
-        }
+    /** @return The declared variants, in network id order. */
+    Species[] variants() {
         Species[] complete = new Species[variants.length];
         for (int i = 0; i < variants.length; i++) {
             Species variant = variants[i];

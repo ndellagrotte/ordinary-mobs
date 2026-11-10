@@ -11,8 +11,10 @@ import fathertoast.specialmobs.bestiary.MobFamily;
 import fathertoast.specialmobs.bestiary.Species;
 import fathertoast.specialmobs.config.BlockTarget;
 import fathertoast.specialmobs.config.Config;
+import fathertoast.specialmobs.dev.SelfTest;
 import fathertoast.specialmobs.loot.LootTableGenerator;
 import fathertoast.specialmobs.network.SpecialMobsNetwork;
+import fathertoast.specialmobs.spawn.SpecialMobReplacer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -21,6 +23,7 @@ import net.minecraft.entity.EntityLiving;
 import net.minecraft.entity.monster.EntityEnderman;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.storage.loot.LootTableList;
+import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.SidedProxy;
@@ -116,7 +119,11 @@ public class SpecialMobsMod {
         }
 
         proxy.init();
+        MinecraftForge.EVENT_BUS.register(new SpecialMobReplacer());
         LootTableGenerator.runIfRequested();
+        if (SelfTest.isRequested()) {
+            SelfTest.register();
+        }
     }
 
 }

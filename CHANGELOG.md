@@ -1,5 +1,17 @@
 # Changelog
 
+## 2.1.0 - 2026-11-11
+
+### Feature
+
+- **compat**: List the variants' drops in Just Enough Resources *[commit by [@ndellagrotte](https://github.com/ndellagrotte) in [e5b685d](https://github.com/ndellagrotte/ordinary-mobs/commit/e5b685dc31a71a5b0d820c98b132fc5e12e4ba43)]*
+
+### Bug Fix
+
+- **client**: Register the special mob renderers again *[commit by [@ndellagrotte](https://github.com/ndellagrotte) in [89b78de](https://github.com/ndellagrotte/ordinary-mobs/commit/89b78de4c661194bd7441f11796fe1ada88b35e8)]*
+
+**Full Changelog**: https://github.com/ndellagrotte/ordinary-mobs/compare/2.0.0...2.1.0
+
 ## 2.0.0 - 2026-11-10
 
 ### CI

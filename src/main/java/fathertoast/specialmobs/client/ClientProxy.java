@@ -10,6 +10,7 @@ import fathertoast.specialmobs.CommonProxy;
 import fathertoast.specialmobs.SpecialMobsMod;
 import fathertoast.specialmobs.ai.IAngler;
 import fathertoast.specialmobs.bestiary.MobFamily;
+import fathertoast.specialmobs.compat.jer.JerPlugin;
 import fathertoast.specialmobs.config.Config;
 import fathertoast.specialmobs.dev.SelfTest;
 import fathertoast.specialmobs.entity.ISpecialMob;
@@ -23,14 +24,42 @@ import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.client.event.ConfigChangedEvent;
 import net.minecraftforge.fml.client.registry.IRenderFactory;
 import net.minecraftforge.fml.client.registry.RenderingRegistry;
+import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
 public class ClientProxy extends CommonProxy {
+
+    /** The mod id of Just Enough Resources, an optional mod that shows mob drops. */
+    static final String JER_MOD_ID = "jeresources";
 
     /** The renderers are written for the vanilla mob classes, which every entity class of the family extends. */
     @SuppressWarnings("unchecked")
     private static <T extends Entity> void register(MobFamily family, IRenderFactory<? super T> renderFactory) {
         RenderingRegistry.registerEntityRenderingHandler((Class<T>) family.base().entityClass(), renderFactory);
+    }
+
+    /**
+     * Each family's renderer is registered for its vanilla replacement only. The variants extend that class and so
+     * get the same renderer.
+     */
+    @Override
+    public void registerRenderers() {
+        register(MobFamily.BLAZE, RenderSpecialBlaze::new);
+        register(MobFamily.CAVE_SPIDER, RenderSpecialSpider::new);
+        register(MobFamily.CREEPER, RenderSpecialCreeper::new);
+        register(MobFamily.ENDERMAN, RenderSpecialEnderman::new);
+        register(MobFamily.GHAST, RenderSpecialGhast::new);
+        register(MobFamily.MAGMA_CUBE, RenderSpecialLavaSlime::new);
+        register(MobFamily.ZOMBIE_PIGMAN, RenderSpecialZombie::new);
+        register(MobFamily.SILVERFISH, RenderSpecialSilverfish::new);
+        register(MobFamily.SKELETON, RenderSpecialSkeleton::new);
+        register(MobFamily.SLIME, RenderSpecialSlime::new);
+        register(MobFamily.SPIDER, RenderSpecialSpider::new);
+        register(MobFamily.WITCH, RenderSpecialWitch::new);
+        register(MobFamily.WITHER_SKELETON, RenderSpecialSkeleton::new);
+        register(MobFamily.ZOMBIE, RenderSpecialZombie::new);
+
+        RenderingRegistry.registerEntityRenderingHandler(EntitySpecialFishHook.class, RenderSpecialFishHook::new);
     }
 
     /** Applies the options after they were changed on the in-game config screen. */
@@ -52,6 +81,10 @@ public class ClientProxy extends CommonProxy {
             Items.FISHING_ROD.addPropertyOverride(new ResourceLocation("cast"),
                 new IAngler.ItemFishingRodPropertyGetter()
             );
+        }
+        if (Loader.isModLoaded(JER_MOD_ID)) {
+            // Every JER type stays inside JerPlugin, which is only loaded here
+            JerPlugin.register();
         }
     }
 

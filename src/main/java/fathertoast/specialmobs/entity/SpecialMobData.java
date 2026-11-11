@@ -428,6 +428,12 @@ public class SpecialMobData<T extends EntityLiving & ISpecialMob> {
         }
     }
 
+    /** For an entity that is only displayed and never spawned: applies the exact base scale on either side. */
+    public void prepareForDisplay() {
+        theEntity.getDataManager().set(renderScale, baseScale);
+        theEntity.notifyDataManagerChange(renderScale);
+    }
+
     public float getFamilyBaseScale() {
         return familyScale;
     }

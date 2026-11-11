@@ -7,6 +7,9 @@
 package fathertoast.specialmobs.client;
 
 import fathertoast.specialmobs.SpecialMobsMod;
+import fathertoast.specialmobs.bestiary.MobFamily;
+import fathertoast.specialmobs.bestiary.Species;
+import fathertoast.specialmobs.compat.jer.JerPlugin;
 import fathertoast.specialmobs.dev.SelfTest;
 import fathertoast.specialmobs.entity.ISpecialMob;
 import org.apache.commons.io.FileUtils;
@@ -14,12 +17,14 @@ import org.apache.commons.io.FileUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiMainMenu;
 import net.minecraft.client.gui.GuiScreen;
+import net.minecraft.client.renderer.entity.Render;
 import net.minecraft.entity.Entity;
 import net.minecraft.world.GameType;
 import net.minecraft.world.WorldSettings;
 import net.minecraft.world.WorldType;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.client.config.GuiConfig;
+import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 
@@ -44,6 +49,37 @@ final class SelfTestClient {
         GuiScreen screen = new SpecialMobsGuiFactory().createConfigGui(minecraft.currentScreen);
         int categories = screen instanceof GuiConfig config ? config.configElements.size() : -1;
         SelfTest.check("config screen lists every category", categories == 15, "it has " + categories + " entries");
+    }
+
+    /** Without its own renderer a family is drawn as the vanilla mob, with none of the variants' textures or sizes. */
+    private static void checkRenderers(Minecraft minecraft) {
+        String ownPackage = SelfTestClient.class.getPackage().getName();
+        for (MobFamily family : MobFamily.values()) {
+            Render<?> renderer = minecraft.getRenderManager().getEntityClassRenderObject(family.base().entityClass());
+            String name = renderer == null ? "none" : renderer.getClass().getName();
+            SelfTest.check("renderer of " + family.key + " is this mod's", name.startsWith(ownPackage + '.'),
+                "it is " + name
+            );
+        }
+    }
+
+    /** JER logs a failed registration at debug level only, so the count is what shows that every variant got in. */
+    private static void checkJer() {
+        if (!Loader.isModLoaded(ClientProxy.JER_MOD_ID)) {
+            return;
+        }
+        int variants = 0;
+        for (MobFamily family : MobFamily.values()) {
+            for (Species species : family.variants()) {
+                if (species.lootTable() != null) {
+                    variants++;
+                }
+            }
+        }
+        int registered = JerPlugin.registered();
+        SelfTest.check("every variant is registered with JER", registered == variants,
+            registered + " of " + variants + " registered"
+        );
     }
 
     private static void openTestWorld(Minecraft minecraft) {
@@ -73,6 +109,8 @@ final class SelfTestClient {
             if (minecraft.currentScreen instanceof GuiMainMenu && ++ticksOnMainMenu > 20) {
                 worldOpened = true;
                 checkConfigScreen(minecraft);
+                checkRenderers(minecraft);
+                checkJer();
                 openTestWorld(minecraft);
             }
         } else if (SelfTest.serverFinished && ++ticksAfterServerFinished == 20) {

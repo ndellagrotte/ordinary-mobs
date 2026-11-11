@@ -10,6 +10,7 @@ import fathertoast.specialmobs.CommonProxy;
 import fathertoast.specialmobs.SpecialMobsMod;
 import fathertoast.specialmobs.ai.IAngler;
 import fathertoast.specialmobs.bestiary.MobFamily;
+import fathertoast.specialmobs.compat.jer.JerPlugin;
 import fathertoast.specialmobs.config.Config;
 import fathertoast.specialmobs.dev.SelfTest;
 import fathertoast.specialmobs.entity.ISpecialMob;
@@ -23,9 +24,13 @@ import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.client.event.ConfigChangedEvent;
 import net.minecraftforge.fml.client.registry.IRenderFactory;
 import net.minecraftforge.fml.client.registry.RenderingRegistry;
+import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
 public class ClientProxy extends CommonProxy {
+
+    /** The mod id of Just Enough Resources, an optional mod that shows mob drops. */
+    static final String JER_MOD_ID = "jeresources";
 
     /** The renderers are written for the vanilla mob classes, which every entity class of the family extends. */
     @SuppressWarnings("unchecked")
@@ -76,6 +81,10 @@ public class ClientProxy extends CommonProxy {
             Items.FISHING_ROD.addPropertyOverride(new ResourceLocation("cast"),
                 new IAngler.ItemFishingRodPropertyGetter()
             );
+        }
+        if (Loader.isModLoaded(JER_MOD_ID)) {
+            // Every JER type stays inside JerPlugin, which is only loaded here
+            JerPlugin.register();
         }
     }
 

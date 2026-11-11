@@ -14,6 +14,18 @@ def accessTransformerNames = access_transformers.tokenize()
 def mixinConfigs = mixin_configs.tokenize(',')*.trim().findAll { !it.isEmpty() }.join(',')
 def dependOnHei = depend_on_hei.toBoolean()
 def heiDependency = { dependOnHei ? it.requires('had-enough-items') : it.optional('had-enough-items') }
+def jerCoordinate = "curse.maven:just-enough-resources-jer-240630:${jer_file_id}"
+def runWithJer = run_with_jer.toBoolean()
+
+configurations {
+    // Mod jars only the dev client loads, through -Dcrl.dev.extrapath: raw (SRG-named) jars, which Cleanroom remaps
+    // as it loads them. It extends nothing and nothing extends it, so they stay off the compile and test classpaths.
+    devRuntimeMods {
+        canBeConsumed = false
+        canBeResolved = true
+        transitive = false
+    }
+}
 
 conventions {
     if (mod_authors) {
@@ -69,6 +81,11 @@ dependencies {
     } else {
         runtimeOnly 'mezz:jei:4.36.1:dev'
     }
+    // Optional at runtime. Only jeresources.api is referenced, which has no SRG-named members, so the raw jar will do
+    compileOnly jerCoordinate
+    if (runWithJer) {
+        devRuntimeMods jerCoordinate
+    }
 }
 
 cleanroom {
@@ -80,6 +97,11 @@ cleanroom {
                 if (mixinConfigs) {
                     // Cleanroom reads this in dev to register mixin configs that would otherwise come from the jar manifest
                     jvmArgs "-Dcrl.dev.mixin=${mixinConfigs}"
+                }
+                if (runWithJer) {
+                    systemProperty 'crl.dev.extrapath', configurations.devRuntimeMods.elements.map { jars ->
+                        jars.collect { it.asFile.absolutePath }.join(File.pathSeparator)
+                    }
                 }
             }
         }

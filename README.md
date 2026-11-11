@@ -41,6 +41,7 @@ Both now apply, including in mutated biomes, which count as the biome they are a
 
 - Options can be changed in game from the mod list. Changes apply to the next spawns without a restart, except for the few options marked as needing one.
 - `spawning` can be switched on and off while the game is running.
+- With [Just Enough Resources](https://www.curseforge.com/minecraft/mc-mods/just-enough-resources-jer) installed, every special variant is listed in its mob tab with its drops, experience and light level, and shows up when you look up what drops an item. JER is optional and only needed on the client.
 
 ## Configuration
 
@@ -64,6 +65,8 @@ The jar is written to `build/libs`. The version is computed from git tags; `./gr
 
 `./gradlew runClient` starts the game with the mod. `./gradlew runServer` starts a dedicated server, and asks you to accept the Minecraft EULA the first time.
 
+`./gradlew runClient -Prun_with_jer=true` also loads Just Enough Resources, to see the variants in its mob tab.
+
 The code is formatted with `./gradlew formatJavaApply`, and `./gradlew clearSkiesApply` expands star imports.
 
 Two development tools are built into the mod. Both do nothing unless the game is started with their system property:
@@ -84,6 +87,7 @@ The dev client occasionally crashes on startup with `Splash thread Exception` an
 | `ai`, `loot`, `network` | AI tasks, loot table building and the texture packet |
 | `mixin` | Accessors for vanilla fields and the hooks into vanilla spawning |
 | `client` | Renderers, the config screen and other client-only code |
+| `compat.jer` | Registers the variants' drops with Just Enough Resources, when it is installed |
 | `dev` | The self-test |
 
 ## License and credits

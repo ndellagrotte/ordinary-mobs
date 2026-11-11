@@ -8,6 +8,8 @@ package fathertoast.specialmobs.client;
 
 import fathertoast.specialmobs.SpecialMobsMod;
 import fathertoast.specialmobs.bestiary.MobFamily;
+import fathertoast.specialmobs.bestiary.Species;
+import fathertoast.specialmobs.compat.jer.JerPlugin;
 import fathertoast.specialmobs.dev.SelfTest;
 import fathertoast.specialmobs.entity.ISpecialMob;
 import org.apache.commons.io.FileUtils;
@@ -22,6 +24,7 @@ import net.minecraft.world.WorldSettings;
 import net.minecraft.world.WorldType;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.client.config.GuiConfig;
+import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 
@@ -60,6 +63,25 @@ final class SelfTestClient {
         }
     }
 
+    /** JER logs a failed registration at debug level only, so the count is what shows that every variant got in. */
+    private static void checkJer() {
+        if (!Loader.isModLoaded(ClientProxy.JER_MOD_ID)) {
+            return;
+        }
+        int variants = 0;
+        for (MobFamily family : MobFamily.values()) {
+            for (Species species : family.variants()) {
+                if (species.lootTable() != null) {
+                    variants++;
+                }
+            }
+        }
+        int registered = JerPlugin.registered();
+        SelfTest.check("every variant is registered with JER", registered == variants,
+            registered + " of " + variants + " registered"
+        );
+    }
+
     private static void openTestWorld(Minecraft minecraft) {
         // Always start from a fresh world, so earlier runs can not affect this one
         FileUtils.deleteQuietly(new File(minecraft.gameDir, "saves/" + WORLD_NAME));
@@ -88,6 +110,7 @@ final class SelfTestClient {
                 worldOpened = true;
                 checkConfigScreen(minecraft);
                 checkRenderers(minecraft);
+                checkJer();
                 openTestWorld(minecraft);
             }
         } else if (SelfTest.serverFinished && ++ticksAfterServerFinished == 20) {

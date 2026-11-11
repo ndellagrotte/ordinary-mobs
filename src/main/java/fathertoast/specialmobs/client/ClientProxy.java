@@ -33,6 +33,30 @@ public class ClientProxy extends CommonProxy {
         RenderingRegistry.registerEntityRenderingHandler((Class<T>) family.base().entityClass(), renderFactory);
     }
 
+    /**
+     * Each family's renderer is registered for its vanilla replacement only. The variants extend that class and so
+     * get the same renderer.
+     */
+    @Override
+    public void registerRenderers() {
+        register(MobFamily.BLAZE, RenderSpecialBlaze::new);
+        register(MobFamily.CAVE_SPIDER, RenderSpecialSpider::new);
+        register(MobFamily.CREEPER, RenderSpecialCreeper::new);
+        register(MobFamily.ENDERMAN, RenderSpecialEnderman::new);
+        register(MobFamily.GHAST, RenderSpecialGhast::new);
+        register(MobFamily.MAGMA_CUBE, RenderSpecialLavaSlime::new);
+        register(MobFamily.ZOMBIE_PIGMAN, RenderSpecialZombie::new);
+        register(MobFamily.SILVERFISH, RenderSpecialSilverfish::new);
+        register(MobFamily.SKELETON, RenderSpecialSkeleton::new);
+        register(MobFamily.SLIME, RenderSpecialSlime::new);
+        register(MobFamily.SPIDER, RenderSpecialSpider::new);
+        register(MobFamily.WITCH, RenderSpecialWitch::new);
+        register(MobFamily.WITHER_SKELETON, RenderSpecialSkeleton::new);
+        register(MobFamily.ZOMBIE, RenderSpecialZombie::new);
+
+        RenderingRegistry.registerEntityRenderingHandler(EntitySpecialFishHook.class, RenderSpecialFishHook::new);
+    }
+
     /** Applies the options after they were changed on the in-game config screen. */
     @SubscribeEvent
     public void onConfigChanged(ConfigChangedEvent.OnConfigChangedEvent event) {

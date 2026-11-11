@@ -7,6 +7,7 @@
 package fathertoast.specialmobs.client;
 
 import fathertoast.specialmobs.SpecialMobsMod;
+import fathertoast.specialmobs.bestiary.MobFamily;
 import fathertoast.specialmobs.dev.SelfTest;
 import fathertoast.specialmobs.entity.ISpecialMob;
 import org.apache.commons.io.FileUtils;
@@ -14,6 +15,7 @@ import org.apache.commons.io.FileUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiMainMenu;
 import net.minecraft.client.gui.GuiScreen;
+import net.minecraft.client.renderer.entity.Render;
 import net.minecraft.entity.Entity;
 import net.minecraft.world.GameType;
 import net.minecraft.world.WorldSettings;
@@ -46,6 +48,18 @@ final class SelfTestClient {
         SelfTest.check("config screen lists every category", categories == 15, "it has " + categories + " entries");
     }
 
+    /** Without its own renderer a family is drawn as the vanilla mob, with none of the variants' textures or sizes. */
+    private static void checkRenderers(Minecraft minecraft) {
+        String ownPackage = SelfTestClient.class.getPackage().getName();
+        for (MobFamily family : MobFamily.values()) {
+            Render<?> renderer = minecraft.getRenderManager().getEntityClassRenderObject(family.base().entityClass());
+            String name = renderer == null ? "none" : renderer.getClass().getName();
+            SelfTest.check("renderer of " + family.key + " is this mod's", name.startsWith(ownPackage + '.'),
+                "it is " + name
+            );
+        }
+    }
+
     private static void openTestWorld(Minecraft minecraft) {
         // Always start from a fresh world, so earlier runs can not affect this one
         FileUtils.deleteQuietly(new File(minecraft.gameDir, "saves/" + WORLD_NAME));
@@ -73,6 +87,7 @@ final class SelfTestClient {
             if (minecraft.currentScreen instanceof GuiMainMenu && ++ticksOnMainMenu > 20) {
                 worldOpened = true;
                 checkConfigScreen(minecraft);
+                checkRenderers(minecraft);
                 openTestWorld(minecraft);
             }
         } else if (SelfTest.serverFinished && ++ticksAfterServerFinished == 20) {
